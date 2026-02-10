@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotions Logger</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fluid.classless.min.css">
+    <link href="/static/styles.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/kitty.png">
+</head>
+<body>
+
+    <header>
+        <nav>
+            <ul>
+                <li><strong>Emotions Crysis Logger</strong></li>
+            </ul>
+            {% if session["user_id"] %}
+            <ul>
+                {# Added 'times' to this list and cleaned up logic to ensure Dashboard stays highlighted #}
+                {% set active_dash = request.endpoint in ['index', 'chain_flow', 'frequent_emotions', 'triggers', 'times'] %}
+
+                <li>
+                    <details>
+                        {# Used the active_dash variable here for cleaner code #}
+                        <summary class="{{ 'contrast' if active_dash else '' }}">
+                            Dashboard ▾
+                        </summary>
+                        <ul>
+                            <li><a href="/">Overview</a></li>
+                            <li><a href="/chains">Chain Flow</a></li>
+                            <li><a href="/frequent_emotions">Frequent Emotions</a></li>
+                            <li><a href="/triggers">Triggers</a></li>
+                            <li><a href="/times">Times</a></li> </ul>
+                    </details>
+                </li>
+
+                <li class="{{ 'active' if request.endpoint == 'entry' else '' }}">
+                    <a href="/entry">Add Entry</a>
+                </li>
+                <li class="{{ 'active' if request.endpoint == 'history' else '' }}">
+                    <a href="/history">History</a>
+                </li>
+                <li class="{{ 'active' if request.endpoint == 'FAQ' else '' }}">
+                    <a href="/faq">FAQ</a>
+                </li>
+                <li>
+                    <a href="/logout" role="button">Logout</a>
+                </li>
+            </ul>
+            {% else %}
+            <ul>
+                <li class="{{ 'active' if request.endpoint == 'login' else '' }}">
+                    <a href="/login">Login</a>
+                </li>
+                    <li class="{{ 'active' if request.endpoint == 'register' else '' }}">
+                    <a href="/register">Register</a>
+                </li>
+            </ul>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% block main %}{% endblock %}
+    </main>
+
+    <footer style="font-size: 0.8em; text-align: center;">
+        <small>System Status: Online • built with Flask & Pico & Big Contribution by Gemini on Frontend</small>
+        <br>
+        <small><a href="https://www.flaticon.com/free-icons/cat" title="cat icons">Cat icons created by Freepik - Flaticon</a></small>
+    </footer>
+
+</body>
+</html>

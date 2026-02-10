@@ -1,0 +1,238 @@
+{% extends "layout.html" %}
+
+{% block main %}
+
+<style>
+    /* 1. LAYOUT FIXES: Wider cards that sit side-by-side */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+        gap: 3rem;
+        width: 100%;
+        max-width: 1800px;
+        margin: 0 auto;
+        padding-bottom: 10rem;
+    }
+
+    /* 2. PAGE LENGTH: Make it scrollable */
+    .container {
+        min-height: 120vh;
+        padding: 2rem;
+    }
+
+    /* 3. CARD SIZE: Taller and Wider feel */
+    .card {
+        padding: 3rem;
+        box-shadow: none;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 550px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+<div class="container">
+
+    <hgroup style="text-align: center; margin-bottom: 4rem; margin-top: 2rem;">
+        <h2 class="text-gradient" style="font-weight: 800; font-size: 3rem; margin-bottom: 0;">
+            Trigger Analysis
+        </h2>
+        <h3 style="color: #a0a0a0; font-weight: 400; font-size: 1.2rem; margin-top: 0.5rem;">
+            What sets it off?
+        </h3>
+    </hgroup>
+
+    <div class="stats-grid">
+
+        <!-- LEFT CARD: Doughnut (Percentages) -->
+        <article class="card">
+            <h3 class="card-title" style="text-align: center; margin-bottom: 1rem;">Impact Distribution</h3>
+            <div class="chart-container">
+                <canvas id="triggerDoughnutChart"></canvas>
+            </div>
+        </article>
+
+        <!-- RIGHT CARD: Bar Chart (Counts) -->
+        <article class="card">
+            <h3 class="card-title" style="text-align: center; margin-bottom: 1rem;">Trigger Frequency</h3>
+            <div class="chart-container">
+                <canvas id="triggerBarChart"></canvas>
+            </div>
+        </article>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        Chart.register(ChartDataLabels);
+
+        // --- 1. DATA PARSING ---
+        // We get the dictionary: {'School': {'count': 1, 'percentage': 50}, ...}
+        const rawData = {{ triggers_dict | default({}) | tojson }};
+
+        console.log("Trigger Data Received:", rawData); // Debug check
+
+        const labels = [];
+        const counts = [];
+        const percentages = [];
+
+        // UPDATED LOGIC: Parse the Dictionary (Object) instead of an Array
+        if (rawData && typeof rawData === 'object' && !Array.isArray(rawData)) {
+            for (const [triggerName, stats] of Object.entries(rawData)) {
+                labels.push(triggerName);
+                counts.push(stats.count);
+                percentages.push(stats.percentage);
+            }
+        }
+
+        // --- PALETTE: SOFT STANDARD COLORS ---
+        const colorPalette = [
+            '#9b59b6', // Soft Purple
+            '#5dade2', // Soft Blue
+            '#ec7063', // Soft Red
+            '#58d68d', // Soft Green
+            '#f5b041', // Soft Orange
+            '#48c9b0', // Soft Teal
+            '#a569bd', // Lighter Purple
+            '#f4d03f', // Soft Yellow
+            '#d7bde2'
+        ];
+        const textLight = '#e0e0e0';
+
+        // Check if we actually have data
+        if (counts.length === 0) {
+            document.querySelector('.stats-grid').innerHTML =
+                '<div style="grid-column: 1 / -1; text-align:center; color:#888; margin-top:3rem; font-size:1.2rem;">' +
+                '<p>No trigger data found.</p>' +
+                '<small>Try adding a trigger to your next log!</small>' +
+                '</div>';
+            return;
+        }
+
+        // --- 2. DOUGHNUT CHART (Left) ---
+        const ctxDoughnut = document.getElementById('triggerDoughnutChart');
+        if (ctxDoughnut) {
+            new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: percentages,
+                        backgroundColor: colorPalette,
+                        borderColor: 'transparent',
+                        borderWidth: 0,
+                        hoverOffset: 20,
+                        borderRadius: 0,
+                        spacing: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '50%',
+                    layout: { padding: 20 },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: textLight,
+                                font: { family: 'Nunito', size: 14 },
+                                usePointStyle: true,
+                                padding: 30
+                            }
+                        },
+                        datalabels: {
+                            color: '#000',
+                            font: { family: "'Nunito', sans-serif", weight: '800', size: 11 },
+                            display: function(context) { return context.dataset.data[context.dataIndex] > 3; },
+                            formatter: function(value, context) { return context.chart.data.labels[context.dataIndex]; },
+                            anchor: 'center',
+                            align: 'center',
+                            backgroundColor: 'rgba(255,255,255,0.8)',
+                            borderRadius: 4
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            callbacks: { label: function(c) { return ` ${c.label}: ${c.raw}%`; } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- 3. HORIZONTAL BAR CHART (Right) ---
+        const ctxBar = document.getElementById('triggerBarChart');
+        if (ctxBar) {
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Occurrences',
+                        data: counts,
+                        backgroundColor: colorPalette,
+                        borderRadius: 10,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { left: 30, right: 20 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            callbacks: {
+                                label: function(context) {
+                                    let index = context.dataIndex;
+                                    let pct = percentages[index];
+                                    return ` ${context.raw} times (${pct}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#000000',
+                            font: { family: "'Nunito', sans-serif", weight: 'bold', size: 15 },
+                            anchor: 'center',
+                            align: 'center',
+                            formatter: function(value) { return value; }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: textLight,
+                                font: { family: 'Nunito', size: 14 },
+                                beginAtZero: true,
+                                stepSize: 1
+                            }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: {
+                                color: textLight,
+                                font: { family: 'Nunito', size: 16, weight: 'bold' },
+                                crossAlign: 'far'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

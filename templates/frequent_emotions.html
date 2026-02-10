@@ -1,0 +1,257 @@
+{% extends "layout.html" %}
+
+{% block main %}
+
+<style>
+    /* 1. LAYOUT FIXES */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+        gap: 3rem;
+        width: 100%;
+        max-width: 1800px;
+        margin: 0 auto;
+        padding-bottom: 10rem;
+    }
+
+    .container {
+        min-height: 120vh;
+        padding: 2rem;
+    }
+
+    .card {
+        padding: 3rem;
+        box-shadow: none;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 550px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* 2. ROBUST EMPTY STATE STYLING (Consistent with previous page) */
+    .global-empty-state {
+        grid-column: 1 / -1; /* Span full width of grid */
+        text-align: center;
+        padding: 4rem;
+        color: #888;
+        border: 2px dashed rgba(142, 68, 173, 0.3);
+        border-radius: 2rem;
+        margin: 2rem auto;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .global-empty-state h4 {
+        color: #d2b4de;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+</style>
+
+<div class="container">
+
+    <hgroup style="text-align: center; margin-bottom: 4rem; margin-top: 2rem;">
+        <h2 class="text-gradient" style="font-weight: 800; font-size: 3rem; margin-bottom: 0;">
+            Emotional Analytics
+        </h2>
+        <h3 style="color: #a0a0a0; font-weight: 400; font-size: 1.2rem; margin-top: 0.5rem;">
+            Deep dive into your most frequent entries.
+        </h3>
+    </hgroup>
+
+    <div class="stats-grid">
+
+        <article class="card">
+            <div class="chart-container">
+                <canvas id="doughnutChart"></canvas>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+        </article>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Register the labels plugin globally so it works on both charts
+        Chart.register(ChartDataLabels);
+
+        // --- 1. DATA PARSING (ROBUST) ---
+        // We use || {} to ensure that if logs_dict is None/null, rawData becomes an empty object
+        // preventing the code from crashing later.
+        const rawData = {{ logs_dict | tojson }} || {};
+
+        const labels = [];
+        const counts = [];
+        const percentages = [];
+
+        // Safety: Ensure rawData is actually an object before iterating
+        if (rawData && typeof rawData === 'object') {
+            for (const [emotion, data] of Object.entries(rawData)) {
+                // Safety: Check if data exists
+                if (!data) continue;
+
+                const count = data.totalCounts || 0;
+
+                // FILTER: Only add to the chart if count is greater than 0
+                if (count > 0) {
+                    labels.push(emotion.charAt(0).toUpperCase() + emotion.slice(1));
+                    counts.push(count);
+                    let pct = data.total_percentage || 0;
+                    percentages.push(Number(pct).toFixed(1));
+                }
+            }
+        }
+
+        // --- PALETTE: SOFT STANDARD COLORS ---
+        const colorPalette = [
+            '#9b59b6', '#5dade2', '#ec7063', '#58d68d', '#f5b041',
+            '#48c9b0', '#a569bd', '#f4d03f', '#d7bde2'
+        ];
+        const textLight = '#e0e0e0';
+
+        // --- 2. ROBUST EMPTY STATE CHECK ---
+        // If the counts array is empty (meaning no data or empty input), show the empty state UI
+        if (counts.length === 0) {
+            const grid = document.querySelector('.stats-grid');
+            grid.innerHTML = `
+                <div class="global-empty-state">
+                    <h4>No data available</h4>
+                    <p>No entries found. Add some logs to generate your analytics!</p>
+                </div>
+            `;
+            // Stop execution here so Chart.js doesn't try to render on missing canvas elements
+            return;
+        }
+
+        // --- 3. DOUGHNUT CHART (Left) ---
+        const ctxDoughnut = document.getElementById('doughnutChart');
+        if (ctxDoughnut) {
+            new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: percentages,
+                        backgroundColor: colorPalette,
+                        borderColor: 'transparent',
+                        borderWidth: 0,
+                        hoverOffset: 20,
+                        borderRadius: 0,
+                        spacing: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '50%',
+                    layout: { padding: 20 },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: textLight,
+                                font: { family: 'Nunito', size: 14 },
+                                usePointStyle: true,
+                                padding: 30
+                            }
+                        },
+                        datalabels: {
+                            color: '#000',
+                            font: { family: "'Nunito', sans-serif", weight: '800', size: 13 },
+                            display: function(context) { return context.dataset.data[context.dataIndex] > 3; },
+                            formatter: function(value, context) { return context.chart.data.labels[context.dataIndex]; },
+                            anchor: 'center',
+                            align: 'center',
+                            backgroundColor: 'rgba(255,255,255,0.8)',
+                            borderRadius: 4
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            callbacks: { label: function(c) { return ` ${c.label}: ${c.raw}%`; } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- 4. HORIZONTAL BAR CHART (Right) ---
+        const ctxBar = document.getElementById('barChart');
+        if (ctxBar) {
+            new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Entries',
+                        data: counts,
+                        backgroundColor: colorPalette,
+                        borderRadius: 10,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { left: 30, right: 20 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.9)',
+                            callbacks: {
+                                label: function(context) {
+                                    let index = context.dataIndex;
+                                    let pct = percentages[index];
+                                    return ` ${context.raw} entries (${pct}%)`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            color: '#000000',
+                            font: { family: "'Nunito', sans-serif", weight: 'bold', size: 15 },
+                            anchor: 'center',
+                            align: 'center',
+                            formatter: function(value) { return value; }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: textLight,
+                                font: { family: 'Nunito', size: 14 },
+                                beginAtZero: true,
+                                stepSize: 1
+                            }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: {
+                                color: textLight,
+                                font: { family: 'Nunito', size: 16, weight: 'bold' },
+                                crossAlign: 'far'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

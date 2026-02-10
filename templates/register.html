@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block main %}
+    <!--
+      Wrapping content in the container/center-screen classes
+      to maintain the specific alignment for the registration card.
+    -->
+    <div class="container center-screen">
+
+        <article class="card " style="text-align: center; max-width: 400px">
+
+            <hgroup>
+                <h2>Welcome Back</h2>
+                <h3>Register to track your emotions</h3>
+            </hgroup>
+
+            {% if error %}
+                <p style="color: #e53935; text-align: center; font-weight: bold;">
+                    {{ error }}
+                </p>
+            {% endif %}
+
+            <form action="/register" method="post">
+                <input autocomplete="off" autofocus name="username" placeholder="Username" type="text">
+                <input name="password" placeholder="Password" type="password">
+                <input name="confirmation" placeholder="Re-Enter Password" type="password">
+                <button type="submit">Register</button>
+            </form>
+
+            <footer style="font-size: 0.8em; text-align: center; bottom:0;">
+                Already Registered? <a href="/login">Login Here!</a>
+            </footer>
+
+        </article>
+
+    </div>
+{% endblock %}

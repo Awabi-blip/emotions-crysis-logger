@@ -1,0 +1,98 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    New Entry
+{% endblock %}
+
+{% block main %}
+    <div class="center-screen">
+
+        <article class="card" style="text-align: center; max-width: 800px; border-radius: 2rem;">
+            <hgroup style="text-align: center; margin-bottom: 2rem;">
+                <h2>New Entry</h2>
+                <h3>Track your feelings</h3>
+            </hgroup>
+
+            <form action="/entry" method="post">
+
+                <!-- 1. Original Emotion (Dropdown) -->
+                <label for="emotion">
+                    <strong>What are you feeling?</strong>
+                    <select name="emotion" id="emotion" required>
+                        <option value="" disabled selected>Select an emotion...</option>
+                        {% for emotion in emotions %}
+                            <option value="{{ emotion }}">{{ emotion }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <!-- 2. The Trigger (Text Box) -->
+                <label for="trigger">
+                    <strong>What triggered it?</strong>
+                    <select name="trigger" id="trigger" onchange="checkOther(this)">
+                        <option value="" disabled selected>Select a trigger</option>
+
+                        {# Loop through triggers, using [0] for value and [1] for display #}
+                        {% for key,value in triggers.items() %}
+                            <option value="{{ key }}">{{ value }}</option>
+                        {% endfor %}
+
+                    </select>
+                </label>
+
+                <div id="other_input_div" style="display:none; margin-top: 10px;">
+                    <input type="text" name="custom_trigger" id="custom_trigger" placeholder="Type one word...">
+                </div>
+
+                <!-- 3. Chain Emotion (Dropdown) -->
+                <label for="chain">
+                    <strong>Did this lead to another emotion?</strong> (Chain Emotion)
+                    <select name="chain" id="chain">
+                        <option value="">No, just the one</option>
+                        {% for emotion in emotions %}
+                            <option value="{{ emotion }}">{{ emotion }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <!-- 4. Time Selection -->
+                <label for="time_option">
+                    <strong>When did this happen?</strong>
+                    <select name="time_option" id="time_option" onchange="toggleTimeInput()">
+                        <option value="now">Right Now (Current Time)</option>
+                        <option value="custom">Enter a specific time...</option>
+                    </select>
+                </label>
+
+                <!-- Hidden Custom Time Input -->
+                <input type="datetime-local" name="custom_time" id="custom_time_input" style="display: none;">
+
+                <!-- 5. Short Note (Text Area) -->
+                <label for="note">
+                    <strong>Notes</strong>
+                    <textarea name="note" placeholder="Any additional context..." rows="3"></textarea>
+                </label>
+
+                <button type="submit" style="margin-top: 1rem;">Save Entry 💾</button>
+
+            </form>
+        </article>
+
+    </div>
+
+    <!-- Simple Script to show/hide the time input -->
+    <script>
+        function toggleTimeInput() {
+            var selector = document.getElementById('time_option');
+            var timeInput = document.getElementById('custom_time_input');
+
+            if (selector.value === 'custom') {
+                timeInput.style.display = 'block';
+                timeInput.required = true;
+            } else {
+                timeInput.style.display = 'none';
+                timeInput.required = false;
+            }
+        }
+    </script>
+{% endblock %}

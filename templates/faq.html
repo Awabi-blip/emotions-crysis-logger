@@ -1,0 +1,156 @@
+{% extends "layout.html" %}
+
+{% block title %} About {% endblock %}
+
+{% block main %}
+
+<style>
+    /* 1. LAYOUT: Single Column, Max Width for readability */
+    .about-grid {
+        display: grid;
+        /* Force single column for maximum width */
+        grid-template-columns: 1fr;
+        gap: 4rem;
+        width: 100%;
+        max-width: 1200px; /* Limits width so lines aren't too long to read */
+        margin: 0 auto;
+        padding-bottom: 10rem;
+    }
+
+    /* 2. CARD STYLING: Specific to About Page */
+    .about-card {
+        padding: 4rem; /* Extra padding for a "Document" feel */
+        background-color: rgba(255, 255, 255, 0.03); /* Slightly darker glass */
+        border: 1px solid rgba(142, 68, 173, 0.2);
+        border-radius: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .about-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(142, 68, 173, 0.6);
+        box-shadow: 0 8px 30px rgba(142, 68, 173, 0.15);
+    }
+
+    .about-card h3 {
+        margin-top: 0;
+        margin-bottom: 2rem;
+        font-weight: 800;
+        font-size: 2.2rem;
+        color: #e0e0e0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 1rem;
+    }
+
+    .about-card p, .about-card li {
+        font-size: 1.2rem; /* Larger text for reading */
+        color: #d0d0d0;
+        line-height: 1.8;
+    }
+
+    .stack-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        list-style: none;
+        padding: 0;
+    }
+
+    .stack-item strong {
+        color: var(--pico-primary);
+        display: block;
+        font-size: 1.4rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<div class="container">
+
+    <hgroup style="text-align: center; margin-bottom: 5rem; margin-top: 4rem;">
+        <h2 class="text-gradient" style="font-weight: 800; font-size: 4rem; margin-bottom: 0;">
+            About Project
+        </h2>
+        <h3 style="color: #a0a0a0; font-weight: 400; font-size: 1.3rem; margin-top: 1rem;">
+            Architecture, Philosophy, and the Developer.
+        </h3>
+    </hgroup>
+
+    <div class="about-grid">
+
+        <!-- CARD 1: THE STACK -->
+        <article class="about-card">
+            <h3>Technical Architecture</h3>
+            <p style="margin-bottom: 2rem;">
+                Built from first principles using a robust <strong>Three-Tier Architecture</strong>. No "magic" frameworks just clean, raw engineering.
+            </p>
+            <ul class="stack-list">
+                <li class="stack-item">
+                    <strong>Frontend Presentation</strong>
+                    HTML5, Jinja2 Templating, CSS3 (Glassmorphism) PicoCSS library, JavaScript (Chart.js for Data Viz).
+                </li>
+                <li class="stack-item">
+                    <strong>Backend Logic</strong>
+                    Python 3, Flask (Server), Werkzeug (Security/Hashing), Session Management, Fernet for Cryptography.
+                </li>
+                <li class="stack-item">
+                    <strong>Data Persistence</strong>
+                    SQLite (Relational DB), Raw SQL Queries (Aggregations, Joins), Schema Design.
+                </li>
+            </ul>
+        </article>
+
+        <!-- CARD 2: DATA PRIVACY -->
+        <article class="about-card">
+            <h3>My View of Your Data</h3>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 2rem;">
+                <!-- PLACEHOLDER IMAGE: Replace 'data_diagram.png' with your actual file -->
+                <div style="width: 100%; height: 300px; background: rgba(0,0,0,0.3); border-radius: 1rem; display: flex; align-items: center; justify-content: center; border: 2px dashed rgba(142, 68, 173, 0.5);">
+                    <img src="/static/data_view.png" style="max-height: 100%; border-radius: 1rem;">
+                </div>
+
+                <p>
+                    Unlike commercial apps that sell your emotional data to advertisers, <strong>Crysis Logger</strong> is built with a Systems Engineering mindset:
+                    <span style="color: var(--pico-primary);">Total Isolation.</span>
+                </p>
+                <p style="line-height: 1.6; color: #d0d0d0;">
+                    <strong style="color: var(--pico-primary); font-size: 1.2rem;">Q: Can you or anyone else read my private notes?</strong>
+                    <br><br>
+                    Your notes are <strong style="color: var(--pico-primary);">encrypted at rest</strong> using industry-standard cryptography (Fernet/AES) before they are ever stored in our database. This means that on our hard drives, your personal thoughts look like random, scrambled characters.
+                    <br><br>
+                    While the system holds the necessary decryption keys to display your history back to you when you log in, we adhere to strict <strong style="color: var(--pico-primary);">Systems Engineering privacy standards</strong>. We do not access, decrypt, or view raw user data manually. Your data is yours, and our architecture is designed to keep it that way.
+                    <br><br>
+                    We deliberately keep metadata (Emotion, Chain, Trigger) unencrypted to power the analytics engine. If these were encrypted, the system could not calculate your Weighted Chains or patterns. We believe this specific architecture strikes the perfect balance between Privacy (your secrets) and Utility (your insights).
+                    <br><br>
+                    Your data lives in a secure, local SQL database. Passwords are hashed using <code style="color: var(--pico-primary);">pbkdf2:sha256</code>.
+                    <br><br>
+                    <em style="color: #fff; border-left: 3px solid var(--pico-primary); padding-left: 10px; display: inline-block;">"The logic is open. The architecture is transparent. You own your mind, and you should own the data it produces."</em>
+                </p>
+            </div>
+        </article>
+
+        <!-- CARD 3: ABOUT ME -->
+        <article class="about-card">
+            <h3>About the Developer</h3>
+            <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <p>
+                        Hi, I'm <strong>Awab</strong>.
+                    </p>
+                    <p>
+                        This is my <strong>CS50x Final Project</strong>.
+                        I am 19 years old and passionate about <strong>Psychology</strong> and <strong>Computer Science</strong>.
+                    </p>
+                    <p>
+                        My goal is to value your data, your privacy and build optimized, robust and scalable systems
+                        that solve complex problems! This is my first semi-professional project, and my first step towards
+                        mastering Systems and Backend engineering.
+                    </p>
+                </div>
+            </div>
+        </article>
+
+    </div>
+</div>
+
+{% endblock %}

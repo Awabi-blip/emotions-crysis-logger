@@ -1,0 +1,288 @@
+{% extends "layout.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+{% block main %}
+    <style>
+        canvas { animation: nitro-burn 1s infinite alternate ease-in-out; }
+        @keyframes nitro-burn {
+            0% { filter: drop-shadow(0 0 1px rgba(142,68,173,0.3)); transform: scale(0.99); }
+            100% { filter: drop-shadow(0 0 8px rgba(142,68,173,0.9)); transform: scale(1.01); }
+        }
+
+        /* Empty State Styling */
+        .empty-card-state {
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+
+    <div class="container">
+
+        <hgroup class="page-header" style="text-align: center; max-width: 400px; margin: 0 auto;">
+            <h2 class="text-gradient" >Dashboard</h2>
+            <h3>Your emotional landscape, visualized.</h3>
+        </hgroup>
+
+        <section class="action-section" style="margin: 2rem;">
+            <article class="card" style="text-align: center; max-width: 1200px; margin: 0 auto; border-radius: 2rem;">
+                <h4 style="color: var(--pico-primary);">New Log</h4>
+                <p style="color: var(--text-muted);">How are you feeling right now?</p>
+                <form action="/entry" method="get" style="margin-top: 1.5rem; width: 100%;">
+                    <button type="submit" style="width: 100%; font-size: 1.1rem;">
+                        Add Entry ➕
+                    </button>
+                </form>
+            </article>
+        </section>
+
+        <section class="stats-grid">
+
+            <article class="card" style="text-align: center; display: flex; flex-direction: column; justify-content: center; border-radius: 2rem; min-height: 350px;">
+                <header><h6 class="card-title" >Total Entries</h6></header>
+                <div style="flex-grow: 1; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 5rem; font-weight: 700; color: var(--text-main);">
+                        {{ total_logs | default(0) }}
+                    </span>
+                </div>
+            </article>
+
+            <article class="card" style ="border-radius: 2rem; text-align: center;">
+                <header><h6 class="card-title" style = "border-radius: 2rem";>Dominant Mood</h6></header>
+
+                {# --- FIX: Check if percentage > 0. If 0, it means no valid data. --- #}
+                {% if percentage and percentage > 0 and dominantEmotion and dominantEmotion|lower != 'null' %}
+
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%; padding-top: 20px;">
+                        <canvas id="dominantChart"></canvas>
+                        <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); text-align: center; border-radius: 2rem; pointer-events: none;">
+                            <span style="font-size: 2rem; font-weight: 700; color: var(--text-main);">
+                                {{ percentage | round | int }}%
+                            </span>
+                            <br>
+                            <small style="font-size: 0.8rem; color: var(--text-muted);">
+                                {{ dominantEmotion }}
+                            </small>
+                        </div>
+                    </div>
+
+                {% else %}
+                    {# --- EMPTY STATE --- #}
+                    <div class="empty-card-state">
+                        <div class="empty-icon">📊</div>
+                        <p>Not enough data.</p>
+                        <small>Add more entries to view.</small>
+                    </div>
+                {% endif %}
+
+                <form action="/frequent_emotions" method="get" style="width: 100%; margin-top: auto;">
+                        <button type="submit" class="secondary outline" style="width: 100%;">View More</button>
+                </form>
+            </article>
+
+            <article class="card" style="text-align: center; border-radius: 2rem;">
+                <header><h6 class="card-title" style = "border-radius: 2rem";>Chain Reaction</h6></header>
+
+                {# --- FIX: Check if chain percentage > 0 --- #}
+                {% if dominantChainPercentage and dominantChainPercentage > 0 and dominantChain and dominantChain|lower != 'null' %}
+
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%; padding-top: 20px;">
+                        <canvas id="chainChart"></canvas>
+
+                        <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                            <span style="font-size: 1.5rem; font-weight: 700; color: var(--text-main);">
+                                {{ dominantChainPercentage | default(0) | round | int }}%
+                            </span>
+                            <br>
+                            <small style="font-size: 0.8rem; color: var(--text-muted);">
+                                of the times your {{dominantEmotion}} turns into {{ dominantChain }}
+                            </small>
+                        </div>
+                    </div>
+
+                {% else %}
+                     {# --- EMPTY STATE --- #}
+                     <div class="empty-card-state">
+                        <div class="empty-icon">🔗</div>
+                        <p>No chains detected yet.</p>
+                        <small>Add more entries to view.</small>
+                    </div>
+                {% endif %}
+
+                <form action="/chains" method="get" style="width: 100%; margin-top: auto;">
+                    <button type="submit" class="secondary outline" style="width: 100%;">View Flow</button>
+                </form>
+            </article>
+
+            <article class="card" style="text-align: center; display: flex; flex-direction: column; justify-content: center; border-radius: 2rem; min-height: 350px;">
+                <header><h6 class="card-title">Peak Trigger Time</h6></header>
+
+                {# --- FIX: Explicitly check against 'null' string --- #}
+                {% if common_hour is not none and common_hour|string|lower != 'null' and common_hour != '' %}
+
+                    <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <p style="color: var(--text-muted); margin-bottom: 0.5rem; font-size: 0.9rem;">
+                            Most triggers happen after
+                        </p>
+                        <span style="font-size: 3.3rem; font-weight: 700; color: var(--text-main);">
+                            {{ common_hour }}
+                        </span>
+                    </div>
+
+                {% else %}
+                    <div style="flex-grow: 1;" class="empty-card-state">
+                        <div class="empty-icon">⏰</div>
+                        <p>No time data yet.</p>
+                        <small>Add more entries to view.</small>
+                    </div>
+                {% endif %}
+
+                <form action="/times" method="get" style="width: 100%; margin-top: auto;">
+                    <button type="submit" class="secondary outline" style="width: 100%;">View Timeline</button>
+                </form>
+            </article>
+
+            <article class="card" style="text-align: center; border-radius: 2rem;">
+                <header><h6 class="card-title" style = "border-radius: 2rem";>Common Trigger</h6></header>
+
+                {# --- FIX: Check if trigger percentage > 0 --- #}
+                {% if percentage_most_common_trigger and percentage_most_common_trigger > 0 and most_common_trigger_name and most_common_trigger_name|lower != 'null' %}
+
+                    <div class="chart-container" style="position: relative; height: 300px; width: 100%; padding-top: 20px;">
+                        <canvas id="triggerChart"></canvas>
+
+                        <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); text-align: center; border-radius: 2rem; pointer-events: none;">
+                            <span style="font-size: 2rem; font-weight: 700; color: var(--text-main);">
+                                {{ percentage_most_common_trigger | default(0) | round | int }}%
+                            </span>
+                            <br>
+                            <small style="font-size: 0.8rem; color: var(--text-muted);">
+                                {{ most_common_trigger_name }}
+                            </small>
+                        </div>
+                    </div>
+
+                {% else %}
+                     <div class="empty-card-state">
+                        <div class="empty-icon">⚡</div>
+                        <p>No triggers found.</p>
+                        <small>Add more entries to view.</small>
+                    </div>
+                {% endif %}
+
+                <form action="/triggers" method="get" style="width: 100%; margin-top: auto;">
+                    <button type="submit" class="secondary outline" style="width: 100%;">View Triggers</button>
+                </form>
+            </article>
+
+            <article class="card" style="text-align: center ; border-radius: 2rem; min-height: 350px;">
+                <header><h6 class="card-title" style = "border-radius: 2rem";>Recent Activity</h6></header>
+
+                <div style="flex-grow: 1; overflow-y: auto; max-height: 280px; padding: 0 10px; margin-bottom: 1rem;">
+                    {% if history %}
+                        <ul style="list-style: none; padding: 0; margin: 0; text-align: left;">
+                            {% for row in history %}
+                                <li style="border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 0; display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <span style="color: var(--pico-primary); font-weight: 800; font-size: 1.1rem; display: block;">
+                                            {{ row.emotion }}
+                                        </span>
+                                        {% if row.trigger and row.trigger|lower != 'null' and row.trigger != 'None' and row.trigger != '' %}
+                                            <small style="color: var(--text-muted); font-size: 0.85rem; display: block; margin-top: 2px;">
+                                                via {{ row.trigger }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    {% if row.chain and row.chain|lower != 'null' and row.chain != 'None' %}
+                                        <div style="text-align: right;">
+                                            <small style="color: #666; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Became</small>
+                                            <div style="color: #e0e0e0; font-weight: 600;">{{ row.chain }}</div>
+                                        </div>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="empty-card-state" style="height: 100%;">
+                            <p>No recent activity.</p>
+                            <small>Add entries to start tracking.</small>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <form action="/history" method="get" style="width: 100%; margin-top: auto;">
+                    <button type="submit" class="secondary outline" style="width: 100%;">View History</button>
+                </form>
+            </article>
+
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function createHollowChart(canvasId, percentage, primaryLabel = "Main", secondaryLabel = "Other") {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            if (typeof percentage !== 'number' || isNaN(percentage)) {
+                ctx.style.display = 'none';
+                return;
+            }
+
+            let cutoutValue = '75%';
+            let borderRadiusValue = 20;
+
+            if (percentage >= 100) {
+                borderRadiusValue = 0;
+            }
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [primaryLabel, secondaryLabel],
+                    datasets: [{
+                        data: [percentage, 100 - percentage],
+                        borderWidth: 0,
+                        backgroundColor: ['#8e44ad', 'rgba(255, 255, 255, 0.05)'],
+                        hoverBackgroundColor: ['#71368a', 'rgba(255, 255, 255, 0.1)'],
+                        cutout: cutoutValue,
+                        borderRadius: borderRadiusValue
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    events: [],
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    animation: { animateScale: true }
+                }
+            });
+        }
+
+        // --- GENERATE CHARTS ---
+        // Note: Logic handles 0 or missing values gracefully now
+
+        const domPercent = {{ percentage | default(0) | int }};
+        const domName = "{{ top_emotion | replace("['", "") | replace("']", "") | replace('["', "") | replace('"]', "") | default('None') }}";
+        createHollowChart('dominantChart', domPercent, domName, "Other");
+
+        const chainPercent = {{ dominantChainPercentage | default(0) | int }};
+        const chainName = "{{ dominantChain | default('None') }}";
+        createHollowChart('chainChart', chainPercent, chainName, "Other");
+
+        const triggerPercent = {{ percentage_most_common_trigger | default(0) | int }};
+        const triggerName = "{{ most_common_trigger_name | default('None') }}";
+        createHollowChart('triggerChart', triggerPercent, triggerName, "Other");
+
+    </script>
+{% endblock %}

@@ -1,0 +1,296 @@
+/* ==========================================================================
+   1. FONTS & VARIABLES
+   ========================================================================== */
+/* Import Nunito Font */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700;800&display=swap');
+
+:root {
+  /* Main Purple (Buttons, Active Links) */
+  --pico-primary: #8e44ad;
+  --pico-primary-background: #8e44ad;
+  --pico-primary-border: #8e44ad;
+  --pico-primary-underline: #8e44ad;
+
+  /* Interaction Purple (Hover States) */
+  --pico-primary-hover: #71368a;
+  --pico-primary-hover-background: #71368a;
+  --pico-primary-hover-border: #71368a;
+
+  /* Focus Ring (The Glow) */
+  --pico-primary-focus: rgba(142, 68, 173, 0.5);
+
+  /* Text Contrast */
+  --pico-primary-inverse: #fff;
+}
+
+/* Apply font globally - RESTORED BACKGROUND */
+body {
+    font-family: 'Nunito', sans-serif;
+    /* Background color removed to restore original Pico theme */
+}
+
+
+/* ==========================================================================
+   2. NAVIGATION BAR
+   ========================================================================== */
+
+/* The "Pill" Container */
+nav {
+  background-color: rgba(1, 1, 1, 0.5); /* Fixed opacity */
+  backdrop-filter: blur(10px);          /* Frosted glass effect */
+  border-radius: 2rem;                  /* Fully rounded corners */
+  padding: 0.5rem 2rem;                 /* Internal spacing */
+  margin-bottom: 2rem;                  /* Spacing below the nav */
+}
+
+/* --- DROPDOWN MENU FIXES --- */
+
+/* 1. Force the dropdown container to sit inline */
+nav li details {
+  display: inline-block;
+  margin: 0;
+  border-bottom: none;
+  position: relative;
+}
+
+/* 2. Fix the "Dashboard" text & Hide Arrows */
+nav li details summary {
+  margin-bottom: 0;
+  line-height: inherit;
+  cursor: pointer;
+  color: #e0e0e0;
+  font-weight: 500;
+  list-style: none; /* Standard */
+  background: transparent;
+}
+
+/* Hide default arrows across browsers */
+nav li details summary::-webkit-details-marker { display: none; }
+nav li details summary::marker { display: none; content: ""; }
+nav li details summary::after { display: none !important; content: none !important; }
+
+/* Highlight summary if active */
+nav li details summary.contrast {
+    color: var(--pico-primary);
+}
+
+/* 3. The Actual Dropdown Menu (Floating on top) */
+nav li details ul {
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  /* Styling */
+  background-color: #000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+  border-radius: 12px;
+  z-index: 999;
+
+  /* Sizing */
+  padding: 0.5rem 0;
+  min-width: 240px; /* Made wider as requested */
+  margin-top: 0.5rem;
+
+  /* Layout */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 4. Links inside the dropdown */
+nav li details ul li {
+  display: block;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+nav li details ul li a {
+  display: block;
+  padding: 10px 20px;
+  width: 100%;
+  border-radius: 0;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+nav li details ul li a:hover {
+  background-color: var(--pico-primary);
+  color: #fff;
+}
+
+/* 5. HOVER TRIGGER (Desktop Only) */
+@media (min-width: 992px) {
+    /* Show menu on hover */
+    nav li details:hover > ul {
+        display: flex;
+    }
+
+    /* Invisible bridge to prevent closing when moving mouse over gap */
+    nav li details ul::before {
+        content: "";
+        position: absolute;
+        top: -0.5rem;
+        left: 0;
+        width: 100%;
+        height: 0.5rem;
+    }
+}
+
+/* --- STANDARD NAV LINKS --- */
+nav a {
+  color: #e0e0e0;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  text-decoration: none;
+}
+
+nav a:hover {
+  color: var(--pico-primary);
+}
+
+nav li.active a {
+  color: var(--pico-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+/* Logout Button */
+nav a[href="/logout"] {
+  background-color: var(--pico-primary);
+  color: white !important;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+  padding: 0.4rem 1rem;
+}
+
+nav a[href="/logout"]:hover {
+  background-color: var(--pico-primary-hover);
+  text-decoration: none;
+}
+
+
+/* ==========================================================================
+   3. GLASS CARDS & STYLING
+   ========================================================================== */
+
+.card {
+    /* Base Glass Look */
+    background-color: rgba(255, 255, 255, 0.05); /* Very see-through */
+    border: 1px solid rgba(142, 68, 173, 0.2);   /* Subtle purple border */
+    border-radius: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+    /* Text & Layout */
+    color: inherit;
+    padding: 2rem;
+    width: 100%;
+
+    /* Smooth Animation */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Hover Effect */
+.card:hover {
+    transform: translateY(-5px); /* Lift up */
+    box-shadow: 0 8px 30px rgba(142, 68, 173, 0.15); /* Purple Glow */
+    border-color: rgba(142, 68, 173, 0.6); /* Brighter Border */
+}
+
+/* --- CARD HEADERS (FIXED) --- */
+/* Removed the border and padding to eliminate the "box" look */
+.card header {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.card-title {
+    font-weight: 800;
+    text-transform: capitalize;
+    color: #e0e0e0;
+    margin: 0; /* Remove default heading margins */
+}
+
+/* Buttons inside Cards */
+.card button.secondary.outline {
+    border-color: rgba(142, 68, 173, 0.5);
+    color: #e0e0e0;
+    transition: all 0.2s ease;
+}
+
+.card button.secondary.outline:hover {
+    background-color: var(--pico-primary);
+    color: white;
+    border-color: var(--pico-primary);
+    box-shadow: 0 0 15px var(--pico-primary-focus);
+}
+
+
+/* ==========================================================================
+   4. LAYOUTS & GRIDS
+   ========================================================================== */
+
+/* Login/Register Centering */
+.center-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+/* Dashboard Grid System */
+.stats-grid {
+    display: grid;
+    /* Auto-fit columns: fit as many as possible, min width 280px */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    width: 120%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 4rem;
+}
+
+/* Ensure cards in grid stretch to full height */
+.stats-grid .card {
+    height: 100%;
+    max-width: 110%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Chart Container Utility */
+.chart-container, .canvas-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+}
+
+
+/* ==========================================================================
+   5. FOOTER (RESTORED)
+   ========================================================================== */
+
+body > footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 1rem;
+    background-color: var(--pico-background-color);
+    z-index: 10;
+    opacity: 0.8;
+    /* Border removed to restore original look */
+
+}
+
+/* Add this to the bottom of styles.css */
+.text-gradient {
+    background: linear-gradient(135deg, #8e44ad, #d2b4de);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}

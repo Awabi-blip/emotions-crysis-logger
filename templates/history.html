@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Home
+{% endblock %}
+
+{% block main %}
+        <table>
+            <thead>
+                <tr>
+                <th>Emotion Felt</th>
+                <th>Trigger</th>
+                <th>Turned Into</th>
+                <th>Note</th>
+                <th>Time</th>
+                <th></th>
+                </tr>
+            </thead>
+           {% for i in range(rows|length) %}
+            <tr>
+                <td>{{ rows[i].emotion }}</td>
+                <td>{{ rows[i].trigger }}</td>
+                <td>{{ rows[i].chain}}</td>
+                <td>{{ rows[i].note }}</td>
+                <td>{{ rows[i].pretty_time}}</td>
+                <td>
+                <form action="/history" method="post" style="display:inline;">
+                    <button type="submit" name = "delete" value = "{{rows[i].log_id}}" class="contrast outline">🗑️</button>
+                </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+{% endblock %}

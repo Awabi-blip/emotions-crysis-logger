@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+
+{% block main %}
+
+<style>
+    /* 1. IMPORT FONTS */
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700;800&display=swap');
+
+    :root {
+        --pico-primary: #8e44ad;
+        --pico-primary-background: #8e44ad;
+        --pico-primary-border: #8e44ad;
+        --pico-primary-hover: #71368a;
+    }
+
+    body { font-family: 'Nunito', sans-serif; }
+
+    /* 2. GRID LAYOUT */
+    .time-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        min-height: 80vh;
+        align-content: start;
+    }
+
+    /* 3. CARD STYLE */
+    .time-card {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(142, 68, 173, 0.2);
+        border-radius: 2rem;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        transition: transform 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+    }
+
+    .time-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(142, 68, 173, 0.5);
+    }
+
+    .time-card h3 {
+        color: #e0e0e0;
+        font-weight: 800;
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+        text-transform: capitalize;
+    }
+
+    .subtitle {
+        color: #888;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        font-weight: 400;
+    }
+
+    /* 4. THE BIG TIME DISPLAY */
+    .time-display {
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff, #d2b4de);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        line-height: 1;
+    }
+
+    .ampm {
+        font-size: 1.5rem;
+        color: var(--pico-primary);
+        font-weight: 700;
+        -webkit-text-fill-color: initial;
+    }
+
+    /* Empty state styling */
+    .card-empty-state {
+        color: #555;
+        font-style: italic;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    /* 5. GLOBAL EMPTY STATE */
+    .global-empty-state {
+        text-align: center;
+        padding: 4rem;
+        color: #888;
+        border: 2px dashed rgba(142, 68, 173, 0.3);
+        border-radius: 2rem;
+        margin: 2rem auto;
+        max-width: 600px;
+    }
+
+    .global-empty-state h4 {
+        color: #d2b4de;
+        margin-bottom: 1rem;
+    }
+</style>
+
+<div class="container">
+    <hgroup style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="font-weight: 800; font-size: 3rem; background: linear-gradient(135deg, #8e44ad, #d2b4de); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Peak Hours</h2>
+        <h3 style="color: var(--text-muted); font-weight: 300;">When each emotion is most likely to trigger.</h3>
+    </hgroup>
+
+    {# --- ROBUSTNESS CHECK START --- #}
+    {% if logs_dict %}
+
+        <div class="time-grid">
+            {% for emotion in EMOTIONS %}
+                {# Use .get() to avoid crashing if keys missing #}
+                {% set emotion_data = logs_dict.get(emotion) %}
+
+                {% if emotion_data %}
+                    <div class="time-card">
+                        <h3>{{ emotion }}</h3>
+                        <div class="subtitle">Most active around</div>
+
+                        {# 1. Extract Data #}
+                        {% set time_data = emotion_data.get('times', {}) %}
+                        {% set h = time_data.get('most_common_trigger_hour') %}
+
+                        {# 2. CHECK: Only show time if h is explicitly NOT None #}
+                        {% if h is not none %}
+
+                            <div class="time-display">
+                                {# Logic to convert 24h (0-23) to 12h format #}
+                                {% if h == 0 %}
+                                    12 <span class="ampm">AM</span>
+                                {% elif h < 12 %}
+                                    {{ h }} <span class="ampm">AM</span>
+                                {% elif h == 12 %}
+                                    12 <span class="ampm">PM</span>
+                                {% else %}
+                                    {{ h - 12 }} <span class="ampm">PM</span>
+                                {% endif %}
+                            </div>
+
+                        {% else %}
+                            {# 3. FALLBACK: If h is None, show dashes #}
+                            <div class="card-empty-state">
+                                -- : --
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+    {% else %}
+
+        {# --- NO DATA MESSAGE --- #}
+        <div class="global-empty-state">
+            <h4>No data available</h4>
+            <p>No times added yet. Add more times to see your peak hours!</p>
+        </div>
+
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "layout.html" %}
+
+{% block main %}
+
+<style>
+    /* 1. WIDER CARDS */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+        gap: 4rem;
+        padding: 2rem;
+        min-height: 100vh;
+        padding-bottom: 5rem;
+        align-items: start;
+        max-width: 1800px;
+        margin: 0 auto;
+    }
+
+    /* 2. SEPARATION */
+    .chart-box {
+        position: relative;
+        height: 500px;
+        width: 100%;
+        margin-top: 2rem;
+    }
+
+    .card h3 {
+        margin-bottom: 2rem !important;
+    }
+
+    /* 3. ROBUST EMPTY STATE (Consistent with other pages) */
+    .global-empty-state {
+        text-align: center;
+        padding: 4rem;
+        color: #888;
+        border: 2px dashed rgba(142, 68, 173, 0.3);
+        border-radius: 2rem;
+        margin: 4rem auto;
+        max-width: 600px;
+    }
+
+    .global-empty-state h4 {
+        color: #d2b4de;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+    }
+</style>
+
+<div class="container">
+    <hgroup style="text-align: center; margin-bottom: 3rem;">
+        <h2 class="text-gradient" style="font-weight: 800; font-size: 3rem; margin-bottom: 0.5rem;">
+            Chain Flow
+        </h2>
+        <h3 style="color: var(--text-muted); font-weight: 300;">How your emotions evolve.</h3>
+    </hgroup>
+
+    {# --- ROBUSTNESS CHECK START --- #}
+    {% if logs_dict %}
+
+        <div class="dashboard-grid">
+            {% for emotion in EMOTIONS %}
+                {# Use .get() for safety #}
+                {% if logs_dict.get(emotion) %}
+                    <div class="card">
+                        <h3 class="card-title">{{ emotion }}</h3>
+                        <div class="chart-box">
+                            {# Check if 'chains' exists and is not empty #}
+                            {% if logs_dict[emotion].get('chains') %}
+                                <canvas id="chart-{{ emotion }}"></canvas>
+                            {% else %}
+                                <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-style: italic; font-size: 1.1rem;">
+                                    No chain data yet.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+    {% else %}
+
+        {# --- NO DATA MESSAGE --- #}
+        <div class="global-empty-state">
+            <h4>No data available</h4>
+            <p>Not enough chain data. Log consecutive entries to see how your emotions evolve!</p>
+        </div>
+
+    {% endif %}
+    {# --- ROBUSTNESS CHECK END --- #}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // 1. GET DATA (SAFE PARSING)
+    // If logs_dict is None, this defaults to an empty object {}
+    const logsData = {{ logs_dict | tojson }} || {};
+
+    // 2. DEFINE THEME COLORS
+    const PRIMARY_COLOR = 'rgba(142, 68, 173, 0.8)';
+    const HOVER_COLOR = '#d2b4de';
+    const GRID_COLOR = 'rgba(255, 255, 255, 0.05)';
+
+    // 3. GENERATE CHARTS
+    // Only run if we actually have data
+    if (logsData && typeof logsData === 'object') {
+
+        for (const [primary, data] of Object.entries(logsData)) {
+
+            // Safety check: ensure data object exists
+            if (!data) continue;
+
+            const canvasId = `chart-${primary}`;
+            const ctx = document.getElementById(canvasId);
+
+            // Only proceed if the canvas exists in the DOM and we have chain data
+            if (ctx && data.chains && Object.keys(data.chains).length > 0) {
+                const chains = data.chains;
+                const labels = Object.keys(chains);
+                const values = labels.map(k => Number(chains[k].percentage).toFixed(2));
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Intensity',
+                            data: values,
+                            backgroundColor: PRIMARY_COLOR,
+                            hoverBackgroundColor: HOVER_COLOR,
+                            borderRadius: 10,
+                            borderSkipped: false,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: { color: GRID_COLOR, borderDash: [5, 5] },
+                                ticks: {
+                                    color: '#aaa',
+                                    font: { family: 'Nunito' },
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                },
+                                border: { display: false }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#e0e0e0', font: { family: 'Nunito', weight: 'bold', size: 14 } },
+                                border: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleFont: { family: 'Nunito', size: 14 },
+                                bodyFont: { family: 'Nunito', size: 13 },
+                                padding: 10,
+                                displayColors: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.raw + '%';
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 1500,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+            }
+        }
+    }
+</script>
+
+{% endblock %}
