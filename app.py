@@ -40,6 +40,7 @@ def get_rows_and_total_logs():
 def trigger_processor():
     rows, total_logs = get_rows_and_total_logs()
     triggers_dict = {}
+    
     for row in rows:
         tr = row['trigger']
         trigger = TRIGGERS[tr]
@@ -49,10 +50,10 @@ def trigger_processor():
             triggers_dict[trigger]['count'] += 1
 
     for key in list(triggers_dict.keys()):
-        numerator3 = triggers_dict[key]['count']
-        if numerator3 > 0:
-            percentage3 = (numerator3/total_logs) * 100
-            triggers_dict[key]['percentage'] = percentage3
+        numerator = triggers_dict[key]['count']
+        if numerator > 0:
+            percentage = (numerator/total_logs) * 100
+            triggers_dict[key]['percentage'] = percentage
 
     return triggers_dict
 
@@ -76,7 +77,7 @@ def get_logs_dict():
         logs_dict[primaryEmotion]["times"]["all_times"].append(hour)
         all_hours.append(hour)
 
-        if chainedEmotion != 'None':
+        if chainedEmotion != 'null':
             if chainedEmotion not in logs_dict[primaryEmotion]["chains"]:
                 logs_dict[primaryEmotion]["chains"][chainedEmotion] = {"count":1, "percentage": 0}
                 logs_dict[primaryEmotion]["totalChains"] += 1
@@ -119,11 +120,11 @@ def get_logs_dict():
         emo = counts['emotion']
         logs_dict[emo]['totalCounts'] = counts['n']
 
-    for emotion2 in EMOTIONS:
-        numerator2 = logs_dict[emotion2]['totalCounts']
-        if numerator2 > 0:
-            total_percentage = (numerator2/total_logs*100)
-            logs_dict[emotion2]['total_percentage'] = total_percentage
+    for emotion3 in EMOTIONS:
+        numerator3 = logs_dict[emotion3]['totalCounts']
+        if numerator3 > 0:
+            total_percentage = (numerator3/total_logs*100)
+            logs_dict[emotion3]['total_percentage'] = total_percentage
 
     return logs_dict, most_common_hour_12
 
@@ -134,10 +135,9 @@ def register():
         username = request.form.get("username").lower()
         if not username:
             return render_template("register.html", error = "please provide us with a username, your honour 🥰")
-
-        for i in username:
-            if i == " ":
-                return render_template("login.html", error = "cookie, please dont add a space in your username 🥰")
+        
+        if "  " in username:
+            return render_template("login.html", error = "cookie, please dont add a space in your username 🥰")
 
         password = request.form.get("password")
         if not password:
@@ -197,13 +197,15 @@ def login():
 @login_required
 def index():
     user_id = session.get("user_id")
-    print("USER_ID" , user_id)
+    if not user_id:
+        return render_template("login.html", error = "please login")
+    
     if request.method == "POST":
         return redirect("/entry")
 
     logs_dict, common_hour = get_logs_dict()
-    rows , total_logs = get_rows_and_total_logs()
-    rows = 0
+    total_logs = len(logs_dict)
+
     emotions_data = db.execute("SELECT emotion, COUNT(*) as n FROM logs WHERE user_id = ? GROUP BY emotion ORDER BY n DESC LIMIT 1;", user_id)
 
     if total_logs == 0:
@@ -234,10 +236,10 @@ def index():
                 dominantChain = Chains[index]
             else:
                 dominantChainPercentage = 0
-                dominantChain = "None"
+                dominantChain = "null"
         else:
             dominantChainPercentage = 0
-            dominantChain = "None"
+            dominantChain = "null"
 
     triggers_data = db.execute("SELECT trigger, COUNT(*) as t FROM logs WHERE user_id = ? GROUP BY trigger ORDER BY t DESC LIMIT 1;", user_id)
     if triggers_data:
@@ -267,7 +269,6 @@ def frequent_emotions():
     user_id = session.get("user_id")
     logs_dict, hours = get_logs_dict()
 
-
     return render_template("frequent_emotions.html", logs_dict = logs_dict, EMOTIONS = EMOTIONS)
 
 @app.route("/times", methods = ["GET", "POST"])
@@ -288,10 +289,15 @@ def triggers():
 @login_required
 def entry():
     if request.method == "POST":
-
+        
         user_id = session.get("user_id")
+        if not user_id:
+            return render_template("entry.html")
 
         emotion = request.form.get("emotion")
+        if not emotion:
+            return render_template("entry.html")
+
 
         chain = request.form.get("chain")
 
@@ -299,8 +305,12 @@ def entry():
             chain = "null"
 
         trigger = request.form.get("trigger")
-
+        if not trigger:
+            return render_template("entry.html")
+        
         time_option = request.form.get("time_option")
+        if not time_option:
+            return render_template("entry.html")
 
         if time_option == 'now':
             time = datetime.datetime.now()
@@ -326,24 +336,16 @@ def entry():
 @login_required
 def history():
     user_id = session.get("user_id")
+    if not user_id:
+        return render_template("entry.html")
+        
     if request.method == "POST":
         delete_button = request.form.get("delete")
         if delete_button:
             delete_id = int(delete_button)
             db.execute("DELETE from logs WHERE log_id = ? AND user_id = ?", delete_id, user_id)
 
-        rows = db.execute("SELECT strftime('%I:%M %p, %d/%m/%Y', time) as pretty_time, log_id ,emotion, trigger, chain, note from logs where user_id =?;", user_id)
-
-        for row in rows:
-            row["note"] = decrypt_text(row["note"])
-        return render_template("history.html", rows= rows)
-
-    rows = db.execute("SELECT strftime('%I:%M %p, %d/%m/%Y', time) as pretty_time, log_id ,emotion, trigger, chain, note from logs where user_id =?;", user_id)
-    for row in rows:
-            row["note"] = decrypt_text(row["note"])
-            tr = row["trigger"]
-            row["trigger"] = TRIGGERS[tr]
-    return render_template("history.html", rows= rows)
+    rows = db.execute("SELECT time, log_id ,emotion, trigger, chain, note from logs where user_id =?;", user_id)
 
 @app.route("/faq")
 @login_required
