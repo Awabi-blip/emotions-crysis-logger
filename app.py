@@ -87,12 +87,13 @@ def get_logs_dict():
 
     for e in EMOTIONS:
         for c in logs_dict[e]['chains']:
-            numerator2 = logs_dict[e]['chains'][c]['count']
-            denominator2 = logs_dict[e]['totalChains']
-            if numerator2 > 0:
-                percentage2 = numerator2/denominator2 * 100
-                logs_dict[e]['chains'][c]['percentage'] = percentage2
+            numerator = logs_dict[e]['chains'][c]['count']
+            denominator = logs_dict[e]['totalChains']
+            if numerator > 0:
+                percentage = numerator/denominator * 100
+                logs_dict[e]['chains'][c]['percentage'] = percentage
 
+    del e, c, numerator, denominator, percentage
 
     counts = Counter(all_hours)
 
@@ -103,28 +104,31 @@ def get_logs_dict():
         most_common_hour_24 = 0
         most_common_hour_12: str = "No Entries :("
 
-    for emiti in EMOTIONS:
-        hours_emiti = logs_dict[emiti]["times"]['all_times']
-        counts = Counter(hours_emiti)
+    for e in EMOTIONS:
+        hours_e = logs_dict[e]["times"]['all_times']
+        counts = Counter(e)
         if len(counts) > 0:
             most_common_hour_for_each_emotion_24 = counts.most_common(1)[0][0]
         else:
             most_common_hour_for_each_emotion_24 = None
 
-        logs_dict[emiti]["times"]["most_common_trigger_hour"] = most_common_hour_for_each_emotion_24
+        logs_dict[e]["times"]["most_common_trigger_hour"] = most_common_hour_for_each_emotion_24
 
+    del e
 
     total_counts = db.execute("SELECT COUNT(*) as n, emotion from logs where user_id = ? GROUP BY emotion", user_id)
 
     for counts in total_counts:
-        emo = counts['emotion']
-        logs_dict[emo]['totalCounts'] = counts['n']
+        e = counts['emotion']
+        logs_dict[e]['totalCounts'] = counts['n']
 
-    for emotion3 in EMOTIONS:
-        numerator3 = logs_dict[emotion3]['totalCounts']
-        if numerator3 > 0:
-            total_percentage = (numerator3/total_logs*100)
-            logs_dict[emotion3]['total_percentage'] = total_percentage
+    del e 
+    
+    for e in EMOTIONS:
+        numerator = logs_dict[e]['totalCounts']
+        if numerator > 0:
+            total_percentage = (numerator/total_logs*100)
+            logs_dict[emotion]['total_percentage'] = total_percentage
 
     return logs_dict, most_common_hour_12
 
