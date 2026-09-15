@@ -92,8 +92,10 @@ def get_logs_dict():
             if numerator > 0:
                 percentage = numerator/denominator * 100
                 logs_dict[e]['chains'][c]['percentage'] = percentage
-
-    del e, c, numerator, denominator, percentage
+    try:
+        del e, c, numerator, denominator, percentage
+    except:
+        pass
 
     counts = Counter(all_hours)
 
@@ -114,7 +116,10 @@ def get_logs_dict():
 
         logs_dict[e]["times"]["most_common_trigger_hour"] = most_common_hour_for_each_emotion_24
 
-    del e
+    try:
+        del e
+    except:
+        pass
 
     total_counts = db.execute("SELECT COUNT(*) as n, emotion from logs where user_id = ? GROUP BY emotion", user_id)
 
@@ -122,8 +127,11 @@ def get_logs_dict():
         e = counts['emotion']
         logs_dict[e]['totalCounts'] = counts['n']
 
-    del e 
-    
+    try:
+        del e
+    except:
+        pass
+        
     for e in EMOTIONS:
         numerator = logs_dict[e]['totalCounts']
         if numerator > 0:
